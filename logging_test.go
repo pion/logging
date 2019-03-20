@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pions/webrtc/pkg/logging"
+	"github.com/pions/logging"
 )
 
 func TestScopedLogger(t *testing.T) {
