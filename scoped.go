@@ -1,105 +1,72 @@
 package logging
 
 import (
-	"fmt"
-	"os"
-	"strings"
-	"sync"
+	"sync/atomic"
 )
 
-type loggerRegistry struct {
-	sync.RWMutex
-	scopeLoggers map[string]*LeveledLogger
-	scopeLevels  map[string]LogLevel
+// LogLevel represents the level at which the logger will emit log messages
+type LogLevel int32
+
+// Set updates the LogLevel to the supplied value
+func (ll *LogLevel) Set(newLevel LogLevel) {
+	atomic.StoreInt32((*int32)(ll), int32(newLevel))
 }
 
-var (
-	registry = &loggerRegistry{
-		scopeLoggers: make(map[string]*LeveledLogger),
-		scopeLevels:  make(map[string]LogLevel),
+// Get retrieves the current LogLevel value
+func (ll *LogLevel) Get() LogLevel {
+	return LogLevel(atomic.LoadInt32((*int32)(ll)))
+}
+
+func (ll LogLevel) String() string {
+	switch ll {
+	case LogLevelDisabled:
+		return "Disabled"
+	case LogLevelError:
+		return "Error"
+	case LogLevelWarn:
+		return "Warn"
+	case LogLevelInfo:
+		return "Info"
+	case LogLevelDebug:
+		return "Debug"
+	case LogLevelTrace:
+		return "Trace"
+	default:
+		return "UNKNOWN"
 	}
+}
+
+const (
+	// LogLevelDisabled completely disables logging of any events
+	LogLevelDisabled LogLevel = iota
+	// LogLevelError is for fatal errors which should be handled by user code,
+	// but are logged to ensure that they are seen
+	LogLevelError
+	// LogLevelWarn is for logging abnormal, but non-fatal library operation
+	LogLevelWarn
+	// LogLevelInfo is for logging normal library operation (e.g. state transitions, etc.)
+	LogLevelInfo
+	// LogLevelDebug is for logging low-level library information (e.g. internal operations)
+	LogLevelDebug
+	// LogLevelTrace is for logging very low-level library information (e.g. network traces)
+	LogLevelTrace
 )
 
-// SetLogLevelForScope sets the logging level for the given
-// scope, or all scopes if "all" is provided. If a logger
-// for the scope does not yet exist, the desired logging
-// level is recorded and applied when the scoped logger
-// is created.
-func SetLogLevelForScope(scope string, level LogLevel) {
-	registry.Lock()
-	defer registry.Unlock()
-
-	scope = strings.ToLower(scope)
-	registry.scopeLevels[scope] = level
-
-	if scope == "all" {
-		for _, logger := range registry.scopeLoggers {
-			logger.SetLevel(level)
-		}
-		return
-	}
-
-	if logger, found := registry.scopeLoggers[scope]; found {
-		logger.SetLevel(level)
-	}
+// LeveledLogger is the basic pions Logger interface
+type LeveledLogger interface {
+	Trace(msg string)
+	Tracef(format string, args ...interface{})
+	Debug(msg string)
+	Debugf(format string, args ...interface{})
+	Info(msg string)
+	Infof(format string, args ...interface{})
+	Warn(msg string)
+	Warnf(format string, args ...interface{})
+	Error(msg string)
+	Errorf(format string, args ...interface{})
 }
 
-// NewScopedLogger returns a predefined logger for the given logging scope
-// NB: Can be used idempotently
-func NewScopedLogger(scope string) *LeveledLogger {
-	registry.Lock()
-	defer registry.Unlock()
-
-	scope = strings.ToLower(scope)
-	if _, found := registry.scopeLoggers[scope]; !found {
-		registry.scopeLoggers[scope] = NewLeveledLoggerForScope(scope)
-
-		// Handle a logger being created after init() is run
-		level := LogLevelDisabled
-		if allLevel, found := registry.scopeLevels["all"]; found {
-			level = allLevel
-		}
-		if scopeLevel, found := registry.scopeLevels[scope]; found {
-			if scopeLevel > level {
-				level = scopeLevel
-			}
-		}
-		if level > LogLevelDisabled {
-			registry.scopeLoggers[scope].SetLevel(level)
-		}
-	}
-	return registry.scopeLoggers[scope]
-}
-
-func init() {
-	logLevels := map[string]LogLevel{
-		"ERROR": LogLevelError,
-		"WARN":  LogLevelWarn,
-		"INFO":  LogLevelInfo,
-		"DEBUG": LogLevelDebug,
-		"TRACE": LogLevelTrace,
-	}
-
-	for name, level := range logLevels {
-		env := os.Getenv(fmt.Sprintf("PIONS_LOG_%s", name))
-		if env == "" {
-			continue
-		}
-
-		if strings.ToLower(env) == "all" {
-			for _, logger := range registry.scopeLoggers {
-				logger.SetLevel(level)
-			}
-			registry.scopeLevels["all"] = level
-			continue
-		}
-
-		scopes := strings.Split(strings.ToLower(env), ",")
-		for _, scope := range scopes {
-			registry.scopeLevels[scope] = level
-			if logger, found := registry.scopeLoggers[strings.TrimSpace(scope)]; found {
-				logger.SetLevel(level)
-			}
-		}
-	}
+// LoggerFactory is the basic pions LoggerFactory interface
+type LoggerFactory interface {
+	NewLogger(scope string) LeveledLogger
 }
