@@ -35,6 +35,7 @@ Check out the **[contributing wiki](https://github.com/pions/webrtc/wiki/Contrib
 * [Michael MacDonald](https://github.com/mjmac) - *Original Author*
 * [Woodrow Douglass](https://github.com/wdouglass) - *Test coverage*
 * [Michiel De Backker](https://github.com/backkem) - *Docs*
+* [Hugo Arregui](https://github.com/hugoArregui) - *Custom Logs*
 
 ### License
 MIT License - see [LICENSE](LICENSE) for full text

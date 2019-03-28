@@ -6,9 +6,6 @@ linters-settings:
 
 linters:
   enable-all: true
-  disable:
-    - gochecknoinits
-    - gochecknoglobals
 
 issues:
   exclude-use-default: false
