@@ -94,6 +94,11 @@ func (ll *DefaultLeveledLogger) logf(logger *log.Logger, level LogLevel, format 
 	}
 }
 
+// SetLevel sets the logger's logging level
+func (ll *DefaultLeveledLogger) SetLevel(newLevel LogLevel) {
+	ll.level.Set(newLevel)
+}
+
 // Trace emits the preformatted message if the logger is at or below LogLevelTrace
 func (ll *DefaultLeveledLogger) Trace(msg string) {
 	ll.logf(ll.trace, LogLevelTrace, msg)

@@ -103,3 +103,12 @@ func TestDefaultLogger(t *testing.T) {
 	testWarnLevel(t, logger)
 	testErrorLevel(t, logger)
 }
+
+func TestSetLevel(t *testing.T) {
+	logger := logging.
+		NewDefaultLeveledLoggerForScope("testSetLevel", logging.LogLevelWarn, os.Stdout)
+
+	testNoDebugLevel(t, logger)
+	logger.SetLevel(logging.LogLevelDebug)
+	testDebugLevel(t, logger)
+}
