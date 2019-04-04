@@ -52,7 +52,7 @@ const (
 	LogLevelTrace
 )
 
-// LeveledLogger is the basic pions Logger interface
+// LeveledLogger is the basic pion Logger interface
 type LeveledLogger interface {
 	Trace(msg string)
 	Tracef(format string, args ...interface{})
@@ -66,7 +66,7 @@ type LeveledLogger interface {
 	Errorf(format string, args ...interface{})
 }
 
-// LoggerFactory is the basic pions LoggerFactory interface
+// LoggerFactory is the basic pion LoggerFactory interface
 type LoggerFactory interface {
 	NewLogger(scope string) LeveledLogger
 }

@@ -1,3 +1,3 @@
-module github.com/pions/logging
+module github.com/pion/logging
 
 go 1.12
