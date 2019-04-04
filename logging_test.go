@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/pions/logging"
+	"github.com/pion/logging"
 )
 
 func testNoDebugLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
