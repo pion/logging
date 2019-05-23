@@ -10,7 +10,7 @@
   <br>
   <a href="https://travis-ci.org/pion/logging"><img src="https://travis-ci.org/pion/logging.svg?branch=master" alt="Build Status"></a>
   <a href="https://godoc.org/github.com/pion/logging"><img src="https://godoc.org/github.com/pion/logging?status.svg" alt="GoDoc"></a>
-  <a href="https://coveralls.io/github/pion/logging"><img src="https://coveralls.io/repos/github/pion/logging/badge.svg" alt="Coverage Status"></a>
+  <a href="https://codecov.io/gh/pion/logging"><img src="https://codecov.io/gh/pion/logging/branch/master/graph/badge.svg" alt="Coverage Status"></a>
   <a href="https://goreportcard.com/report/github.com/pion/logging"><img src="https://goreportcard.com/badge/github.com/pion/logging" alt="Go Report Card"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
 </p>
