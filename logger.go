@@ -3,170 +3,265 @@ package logging
 import (
 	"fmt"
 	"io"
-	"log"
+	"net"
+
 	"os"
 	"strings"
-	"sync"
+	"sync/atomic"
 )
 
-// Use this abstraction to ensure thread-safe access to the logger's io.Writer
-// (which could change at runtime)
-type loggerWriter struct {
-	sync.RWMutex
-	output io.Writer
+// LogLevel represents the level at which the logger will emit log messages
+type LogLevel int32
+
+// Set updates the LogLevel to the supplied value
+func (ll *LogLevel) Set(newLevel LogLevel) {
+	atomic.StoreInt32((*int32)(ll), int32(newLevel))
 }
 
-func (lw *loggerWriter) SetOutput(output io.Writer) {
-	lw.Lock()
-	defer lw.Unlock()
-	lw.output = output
+// Get retrieves the current LogLevel value
+func (ll *LogLevel) Get() LogLevel {
+	return LogLevel(atomic.LoadInt32((*int32)(ll)))
 }
 
-func (lw *loggerWriter) Write(data []byte) (int, error) {
-	lw.RLock()
-	defer lw.RUnlock()
-	return lw.output.Write(data)
-}
-
-// DefaultLeveledLogger encapsulates functionality for providing logging at
-// user-defined levels
-type DefaultLeveledLogger struct {
-	level  LogLevel
-	writer *loggerWriter
-	trace  *log.Logger
-	debug  *log.Logger
-	info   *log.Logger
-	warn   *log.Logger
-	err    *log.Logger
-}
-
-// WithTraceLogger is a chainable configuration function which sets the
-// Trace-level logger
-func (ll *DefaultLeveledLogger) WithTraceLogger(log *log.Logger) *DefaultLeveledLogger {
-	ll.trace = log
-	return ll
-}
-
-// WithDebugLogger is a chainable configuration function which sets the
-// Debug-level logger
-func (ll *DefaultLeveledLogger) WithDebugLogger(log *log.Logger) *DefaultLeveledLogger {
-	ll.debug = log
-	return ll
-}
-
-// WithInfoLogger is a chainable configuration function which sets the
-// Info-level logger
-func (ll *DefaultLeveledLogger) WithInfoLogger(log *log.Logger) *DefaultLeveledLogger {
-	ll.info = log
-	return ll
-}
-
-// WithWarnLogger is a chainable configuration function which sets the
-// Warn-level logger
-func (ll *DefaultLeveledLogger) WithWarnLogger(log *log.Logger) *DefaultLeveledLogger {
-	ll.warn = log
-	return ll
-}
-
-// WithErrorLogger is a chainable configuration function which sets the
-// Error-level logger
-func (ll *DefaultLeveledLogger) WithErrorLogger(log *log.Logger) *DefaultLeveledLogger {
-	ll.err = log
-	return ll
-}
-
-// WithOutput is a chainable configuration function which sets the logger's
-// logging output to the supplied io.Writer
-func (ll *DefaultLeveledLogger) WithOutput(output io.Writer) *DefaultLeveledLogger {
-	ll.writer.SetOutput(output)
-	return ll
-}
-
-func (ll *DefaultLeveledLogger) logf(logger *log.Logger, level LogLevel, format string, args ...interface{}) {
-	if ll.level.Get() < level {
-		return
-	}
-
-	callDepth := 3 // this frame + wrapper func + caller
-	msg := fmt.Sprintf(format, args...)
-	if err := logger.Output(callDepth, msg); err != nil {
-		fmt.Fprintf(os.Stderr, "Unable to log: %s", err)
+func (ll LogLevel) String() string {
+	switch ll {
+	case LogLevelDisabled:
+		return "Disabled"
+	case LogLevelError:
+		return "Error"
+	case LogLevelWarn:
+		return "Warn"
+	case LogLevelInfo:
+		return "Info"
+	case LogLevelDebug:
+		return "Debug"
+	case LogLevelTrace:
+		return "Trace"
+	default:
+		return "UNKNOWN"
 	}
 }
 
-// SetLevel sets the logger's logging level
-func (ll *DefaultLeveledLogger) SetLevel(newLevel LogLevel) {
-	ll.level.Set(newLevel)
+const (
+	// LogLevelDisabled completely disables logging of any events
+	LogLevelDisabled LogLevel = iota
+	// LogLevelError is for fatal errors which should be handled by user code,
+	// but are logged to ensure that they are seen
+	LogLevelError
+	// LogLevelWarn is for logging abnormal, but non-fatal library operation
+	LogLevelWarn
+	// LogLevelInfo is for logging normal library operation (e.g. state transitions, etc.)
+	LogLevelInfo
+	// LogLevelDebug is for logging low-level library information (e.g. internal operations)
+	LogLevelDebug
+	// LogLevelTrace is for logging very low-level library information (e.g. network traces)
+	LogLevelTrace
+)
+
+// LoggerFactory is the basic pion LoggerFactory interface
+type LoggerFactory interface {
+	NewLogger(scope string) LeveledLogger
 }
 
-// Trace emits the preformatted message if the logger is at or below LogLevelTrace
-func (ll *DefaultLeveledLogger) Trace(msg string) {
-	ll.logf(ll.trace, LogLevelTrace, msg)
+// Formatter is the actual log entry encoder
+type Formatter interface {
+	Msg(message string)
+	Msgf(format string, args ...interface{})
+	Bool(key string, b bool)
+	Err(err error)
+	Float32(key string, f float32)
+	Float64(key string, f float64)
+	IPAddr(key string, ip net.IP)
+	Int(key string, i int)
+	Int16(key string, i int16)
+	Int32(key string, i int32)
+	Int64(key string, i int64)
+	Int8(key string, i int8)
+	Str(key, val string)
+	Uint(key string, i uint)
+	Uint16(key string, i uint16)
+	Uint32(key string, i uint32)
+	Uint64(key string, i uint64)
+	Uint8(key string, i uint8)
 }
 
-// Tracef formats and emits a message if the logger is at or below LogLevelTrace
-func (ll *DefaultLeveledLogger) Tracef(format string, args ...interface{}) {
-	ll.logf(ll.trace, LogLevelTrace, format, args...)
+// FormatterFactory ...
+type FormatterFactory func(LogLevel) Formatter
+
+// Logger represents a pion Logger
+type Logger struct {
+	FormatterFactory FormatterFactory
+	Lvl              LogLevel
 }
 
-// Debug emits the preformatted message if the logger is at or below LogLevelDebug
-func (ll *DefaultLeveledLogger) Debug(msg string) {
-	ll.logf(ll.debug, LogLevelDebug, msg)
+// LeveledLogger is the legacy pion Logger interface
+type LeveledLogger = *Logger
+
+// Event is a helper structure to be able to chain events
+type Event struct {
+	formatter Formatter
 }
 
-// Debugf formats and emits a message if the logger is at or below LogLevelDebug
-func (ll *DefaultLeveledLogger) Debugf(format string, args ...interface{}) {
-	ll.logf(ll.debug, LogLevelDebug, format, args...)
-}
+// InfoLvl creates a new event with info lvl
+func (l *Logger) InfoLvl() *Event { return l.newEvent(LogLevelInfo) }
 
-// Info emits the preformatted message if the logger is at or below LogLevelInfo
-func (ll *DefaultLeveledLogger) Info(msg string) {
-	ll.logf(ll.info, LogLevelInfo, msg)
-}
+// DebugLvl creates a new event with debug lvl
+func (l *Logger) DebugLvl() *Event { return l.newEvent(LogLevelDebug) }
 
-// Infof formats and emits a message if the logger is at or below LogLevelInfo
-func (ll *DefaultLeveledLogger) Infof(format string, args ...interface{}) {
-	ll.logf(ll.info, LogLevelInfo, format, args...)
-}
+// WarnLvl creates a new event with warn lvl
+func (l *Logger) WarnLvl() *Event { return l.newEvent(LogLevelWarn) }
 
-// Warn emits the preformatted message if the logger is at or below LogLevelWarn
-func (ll *DefaultLeveledLogger) Warn(msg string) {
-	ll.logf(ll.warn, LogLevelWarn, msg)
-}
+// ErrorLvl creates a new event with error lvl
+func (l *Logger) ErrorLvl() *Event { return l.newEvent(LogLevelError) }
 
-// Warnf formats and emits a message if the logger is at or below LogLevelWarn
-func (ll *DefaultLeveledLogger) Warnf(format string, args ...interface{}) {
-	ll.logf(ll.warn, LogLevelWarn, format, args...)
-}
+// TraceLvl creates a new event with tracelvl
+func (l *Logger) TraceLvl() *Event { return l.newEvent(LogLevelTrace) }
 
-// Error emits the preformatted message if the logger is at or below LogLevelError
-func (ll *DefaultLeveledLogger) Error(msg string) {
-	ll.logf(ll.err, LogLevelError, msg)
-}
+// Trace is a legacy method to report a trace lvl entry
+func (l *Logger) Trace(msg string) { l.TraceLvl().Msg(msg) }
 
-// Errorf formats and emits a message if the logger is at or below LogLevelError
-func (ll *DefaultLeveledLogger) Errorf(format string, args ...interface{}) {
-	ll.logf(ll.err, LogLevelError, format, args...)
-}
+// Tracef is a legacy method to report a trace lvl entry
+func (l *Logger) Tracef(format string, args ...interface{}) { l.TraceLvl().Msgf(format, args...) }
 
-// NewDefaultLeveledLoggerForScope returns a configured LeveledLogger
-func NewDefaultLeveledLoggerForScope(scope string, level LogLevel, writer io.Writer) *DefaultLeveledLogger {
-	if writer == nil {
-		writer = os.Stdout
+// Debug is a legacy method to report a trace lvl entry
+func (l *Logger) Debug(msg string) { l.DebugLvl().Msg(msg) }
+
+// Debugf is a legacy method to report a trace lvl entry
+func (l *Logger) Debugf(format string, args ...interface{}) { l.DebugLvl().Msgf(format, args...) }
+
+// Info is a legacy method to report a trace lvl entry
+func (l *Logger) Info(msg string) { l.InfoLvl().Msg(msg) }
+
+// Infof is a legacy method to report a trace lvl entry
+func (l *Logger) Infof(format string, args ...interface{}) { l.InfoLvl().Msgf(format, args...) }
+
+// Warn is a legacy method to report a trace lvl entry
+func (l *Logger) Warn(msg string) { l.WarnLvl().Msg(msg) }
+
+// Warnf is a legacy method to report a trace lvl entry
+func (l *Logger) Warnf(format string, args ...interface{}) { l.WarnLvl().Msgf(format, args...) }
+
+// Error is a legacy method to report a trace lvl entry
+func (l *Logger) Error(msg string) { l.ErrorLvl().Msg(msg) }
+
+// Errorf is a legacy method to report a trace lvl entry
+func (l *Logger) Errorf(format string, args ...interface{}) { l.ErrorLvl().Msgf(format, args...) }
+
+func (l *Logger) newEvent(lvl LogLevel) *Event {
+	if l.Lvl < lvl {
+		return &Event{formatter: &NoopFormatter{}}
 	}
-	logger := &DefaultLeveledLogger{
-		writer: &loggerWriter{output: writer},
-		level:  level,
-	}
-	return logger.
-		WithTraceLogger(log.New(logger.writer, fmt.Sprintf("%s TRACE: ", scope), log.Lmicroseconds|log.Lshortfile)).
-		WithDebugLogger(log.New(logger.writer, fmt.Sprintf("%s DEBUG: ", scope), log.Lmicroseconds|log.Lshortfile)).
-		WithInfoLogger(log.New(logger.writer, fmt.Sprintf("%s INFO: ", scope), log.LstdFlags)).
-		WithWarnLogger(log.New(logger.writer, fmt.Sprintf("%s WARNING: ", scope), log.LstdFlags)).
-		WithErrorLogger(log.New(logger.writer, fmt.Sprintf("%s ERROR: ", scope), log.LstdFlags))
+
+	return &Event{formatter: l.FormatterFactory(lvl)}
 }
 
-// DefaultLoggerFactory define levels by scopes and creates new DefaultLeveledLogger
+// Bool ...
+func (e *Event) Bool(key string, b bool) *Event {
+	e.formatter.Bool(key, b)
+	return e
+}
+
+// Err ...
+func (e *Event) Err(err error) *Event {
+	e.formatter.Err(err)
+	return e
+}
+
+// Float32 ...
+func (e *Event) Float32(key string, f float32) *Event {
+	e.formatter.Float32(key, f)
+	return e
+}
+
+// Float64 ...
+func (e *Event) Float64(key string, f float64) *Event {
+	e.formatter.Float64(key, f)
+	return e
+}
+
+// IPAddr ...
+func (e *Event) IPAddr(key string, ip net.IP) *Event {
+	e.formatter.IPAddr(key, ip)
+	return e
+}
+
+// Int ...
+func (e *Event) Int(key string, i int) *Event {
+	e.formatter.Int(key, i)
+	return e
+}
+
+// Int16 ...
+func (e *Event) Int16(key string, i int16) *Event {
+	e.formatter.Int16(key, i)
+	return e
+}
+
+// Int32 ...
+func (e *Event) Int32(key string, i int32) *Event {
+	e.formatter.Int32(key, i)
+	return e
+}
+
+// Int64 ...
+func (e *Event) Int64(key string, i int64) *Event {
+	e.formatter.Int64(key, i)
+	return e
+}
+
+// Int8 ...
+func (e *Event) Int8(key string, i int8) *Event {
+	e.formatter.Int8(key, i)
+	return e
+}
+
+// Str ...
+func (e *Event) Str(key, val string) *Event {
+	e.formatter.Str(key, val)
+	return e
+}
+
+// Uint ...
+func (e *Event) Uint(key string, i uint) *Event {
+	e.formatter.Uint(key, i)
+	return e
+}
+
+// Uint16 ...
+func (e *Event) Uint16(key string, i uint16) *Event {
+	e.formatter.Uint16(key, i)
+	return e
+}
+
+// Uint32 ...
+func (e *Event) Uint32(key string, i uint32) *Event {
+	e.formatter.Uint32(key, i)
+	return e
+}
+
+// Uint64 ...
+func (e *Event) Uint64(key string, i uint64) *Event {
+	e.formatter.Uint64(key, i)
+	return e
+}
+
+// Uint8 ...
+func (e *Event) Uint8(key string, i uint8) *Event {
+	e.formatter.Uint8(key, i)
+	return e
+}
+
+// Msg writes the event to the writer
+func (e *Event) Msg(message string) {
+	e.formatter.Msg(message)
+}
+
+// Msgf writes the event to the writer
+func (e *Event) Msgf(format string, args ...interface{}) {
+	e.formatter.Msgf(format, args...)
+}
+
+// DefaultLoggerFactory define levels by scopes and creates new Loggers
 type DefaultLoggerFactory struct {
 	Writer          io.Writer
 	DefaultLogLevel LogLevel
@@ -178,7 +273,6 @@ func NewDefaultLoggerFactory() *DefaultLoggerFactory {
 	factory := DefaultLoggerFactory{}
 	factory.DefaultLogLevel = LogLevelError
 	factory.ScopeLevels = make(map[string]LogLevel)
-	factory.Writer = os.Stdout
 
 	logLevels := map[string]LogLevel{
 		"DISABLE": LogLevelDisabled,
@@ -214,7 +308,20 @@ func NewDefaultLoggerFactory() *DefaultLoggerFactory {
 	return &factory
 }
 
-// NewLogger returns a configured LeveledLogger for the given , argsscope
+// NewDefaultLeveledLoggerForScope returns a configured Logger
+func NewDefaultLeveledLoggerForScope(scope string, level LogLevel, writer io.Writer) *Logger {
+	if writer == nil {
+		writer = os.Stdout
+	}
+	return &Logger{
+		FormatterFactory: func(lvl LogLevel) Formatter {
+			return NewStringFormatter(writer, lvl)
+		},
+		Lvl: level,
+	}
+}
+
+// NewLogger returns a configured Logger for the given , argsscope
 func (f *DefaultLoggerFactory) NewLogger(scope string) LeveledLogger {
 	logLevel := f.DefaultLogLevel
 	if f.ScopeLevels != nil {
@@ -224,5 +331,6 @@ func (f *DefaultLoggerFactory) NewLogger(scope string) LeveledLogger {
 			logLevel = scopeLevel
 		}
 	}
+
 	return NewDefaultLeveledLoggerForScope(scope, logLevel, f.Writer)
 }
