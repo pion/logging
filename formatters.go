@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"runtime"
 	"strconv"
 	"strings"
 )
@@ -122,6 +123,14 @@ func (f *StringFormatter) Msg(message string) {
 	f.writeString(message)
 	f.writeString("\n")
 
+	_, file, line, ok := runtime.Caller(3)
+	if ok {
+		_, err := f.writer.Write([]byte(fmt.Sprintf("[%s:%d] ", file, line)))
+		if err != nil {
+			fmt.Printf("error writing log %s\n", err.Error())
+		}
+	}
+
 	_, err := f.writer.Write([]byte(f.b.String()))
 	if err != nil {
 		fmt.Printf("error writing log %s\n", err.Error())
@@ -136,6 +145,14 @@ func (f *StringFormatter) Msgf(format string, args ...interface{}) {
 
 	f.writeString(fmt.Sprintf(format, args...))
 	f.writeString("\n")
+
+	_, file, line, ok := runtime.Caller(3)
+	if ok {
+		_, err := f.writer.Write([]byte(fmt.Sprintf("[%s:%d] ", file, line)))
+		if err != nil {
+			fmt.Printf("error writing log %s\n", err.Error())
+		}
+	}
 
 	_, err := f.writer.Write([]byte(f.b.String()))
 	if err != nil {
