@@ -36,6 +36,7 @@ Check out the **[contributing wiki](https://github.com/pion/webrtc/wiki/Contribu
 * [Michiel De Backker](https://github.com/backkem) - *Docs*
 * [Hugo Arregui](https://github.com/hugoArregui) - *Custom Logs*
 * [Justin Okamoto](https://github.com/justinokamoto) - *Disabled Logs Update*
+* [Atsushi Watanabe](https://github.com/at-wat) - *Fix/update CI*
 
 ### License
 MIT License - see [LICENSE](LICENSE) for full text
