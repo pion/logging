@@ -1,3 +1,4 @@
+// Package logging provides the logging library used by Pion
 package logging
 
 import (
