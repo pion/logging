@@ -4,10 +4,5 @@ linters-settings:
   misspell:
     locale: US
 
-linters:
-  enable-all: true
-
-issues:
-  exclude-use-default: false
-  max-per-linter: 0
-  max-same-issues: 50
+run:
+  skip-dirs-use-default: false
