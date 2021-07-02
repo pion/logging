@@ -29,14 +29,5 @@ If you need commercial support or don't want to use public methods you can conta
 ### Contributing
 Check out the **[contributing wiki](https://github.com/pion/webrtc/wiki/Contributing)** to join the group of amazing people making this project possible:
 
-* [John Bradley](https://github.com/kc5nra) - *Original Author*
-* [Sean DuBois](https://github.com/Sean-Der) - *Original Author*
-* [Michael MacDonald](https://github.com/mjmac) - *Original Author*
-* [Woodrow Douglass](https://github.com/wdouglass) - *Test coverage*
-* [Michiel De Backker](https://github.com/backkem) - *Docs*
-* [Hugo Arregui](https://github.com/hugoArregui) - *Custom Logs*
-* [Justin Okamoto](https://github.com/justinokamoto) - *Disabled Logs Update*
-* [Atsushi Watanabe](https://github.com/at-wat) - *Fix/update CI*
-
 ### License
 MIT License - see [LICENSE](LICENSE) for full text
