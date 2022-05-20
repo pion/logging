@@ -73,7 +73,7 @@ func testErrorLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 
 func TestDefaultLoggerFactory(t *testing.T) {
 	f := logging.DefaultLoggerFactory{
-		Writer:          os.Stdout,
+		Writer:          os.Stderr,
 		DefaultLogLevel: logging.LogLevelWarn,
 		ScopeLevels: map[string]logging.LogLevel{
 			"foo": logging.LogLevelDebug,
@@ -100,7 +100,7 @@ func TestDefaultLoggerFactory(t *testing.T) {
 
 func TestDefaultLogger(t *testing.T) {
 	logger := logging.
-		NewDefaultLeveledLoggerForScope("test1", logging.LogLevelWarn, os.Stdout)
+		NewDefaultLeveledLoggerForScope("test1", logging.LogLevelWarn, os.Stderr)
 
 	testNoDebugLevel(t, logger)
 	testWarnLevel(t, logger)
@@ -109,7 +109,7 @@ func TestDefaultLogger(t *testing.T) {
 
 func TestSetLevel(t *testing.T) {
 	logger := logging.
-		NewDefaultLeveledLoggerForScope("testSetLevel", logging.LogLevelWarn, os.Stdout)
+		NewDefaultLeveledLoggerForScope("testSetLevel", logging.LogLevelWarn, os.Stderr)
 
 	testNoDebugLevel(t, logger)
 	logger.SetLevel(logging.LogLevelDebug)
