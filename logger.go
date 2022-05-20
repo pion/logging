@@ -156,7 +156,7 @@ func (ll *DefaultLeveledLogger) Errorf(format string, args ...interface{}) {
 // NewDefaultLeveledLoggerForScope returns a configured LeveledLogger
 func NewDefaultLeveledLoggerForScope(scope string, level LogLevel, writer io.Writer) *DefaultLeveledLogger {
 	if writer == nil {
-		writer = os.Stdout
+		writer = os.Stderr
 	}
 	logger := &DefaultLeveledLogger{
 		writer: &loggerWriter{output: writer},
@@ -182,7 +182,7 @@ func NewDefaultLoggerFactory() *DefaultLoggerFactory {
 	factory := DefaultLoggerFactory{}
 	factory.DefaultLogLevel = LogLevelError
 	factory.ScopeLevels = make(map[string]LogLevel)
-	factory.Writer = os.Stdout
+	factory.Writer = os.Stderr
 
 	logLevels := map[string]LogLevel{
 		"DISABLE": LogLevelDisabled,
