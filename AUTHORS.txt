@@ -9,6 +9,7 @@ Hugo Arregui <hugo@decentraland.org>
 Michael MacDonald <github@macdonald.cx>
 Okamoto <justmoto@186590df5fbb.ant.amazon.com>
 Sean DuBois <sean@siobud.com>
+Steffen Vogel <post@steffenvogel.de>
 Woodrow Douglass <wdouglass@carnegierobotics.com>
 
 # List of contributors not appearing in Git history
