@@ -35,7 +35,7 @@ func testDebugLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 	if !strings.Contains(outBuf.String(), dbgMsg) {
 		t.Errorf("Expected to find %q in %q, but didn't", dbgMsg, outBuf.String())
 	}
-	logger.Debugf(dbgMsg)
+	logger.Debugf(dbgMsg) // nolint: govet
 	if !strings.Contains(outBuf.String(), dbgMsg) {
 		t.Errorf("Expected to find %q in %q, but didn't", dbgMsg, outBuf.String())
 	}
@@ -50,7 +50,7 @@ func testWarnLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 	if !strings.Contains(outBuf.String(), warnMsg) {
 		t.Errorf("Expected to find %q in %q, but didn't", warnMsg, outBuf.String())
 	}
-	logger.Warnf(warnMsg)
+	logger.Warnf(warnMsg) // nolint: govet
 	if !strings.Contains(outBuf.String(), warnMsg) {
 		t.Errorf("Expected to find %q in %q, but didn't", warnMsg, outBuf.String())
 	}
@@ -65,7 +65,7 @@ func testErrorLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 	if !strings.Contains(outBuf.String(), errMsg) {
 		t.Errorf("Expected to find %q in %q, but didn't", errMsg, outBuf.String())
 	}
-	logger.Errorf(errMsg)
+	logger.Errorf(errMsg) // nolint: govet
 	if !strings.Contains(outBuf.String(), errMsg) {
 		t.Errorf("Expected to find %q in %q, but didn't", errMsg, outBuf.String())
 	}

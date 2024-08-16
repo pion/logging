@@ -105,7 +105,7 @@ func (ll *DefaultLeveledLogger) SetLevel(newLevel LogLevel) {
 
 // Trace emits the preformatted message if the logger is at or below LogLevelTrace
 func (ll *DefaultLeveledLogger) Trace(msg string) {
-	ll.logf(ll.trace, LogLevelTrace, msg)
+	ll.logf(ll.trace, LogLevelTrace, msg) // nolint: govet
 }
 
 // Tracef formats and emits a message if the logger is at or below LogLevelTrace
@@ -115,7 +115,7 @@ func (ll *DefaultLeveledLogger) Tracef(format string, args ...interface{}) {
 
 // Debug emits the preformatted message if the logger is at or below LogLevelDebug
 func (ll *DefaultLeveledLogger) Debug(msg string) {
-	ll.logf(ll.debug, LogLevelDebug, msg)
+	ll.logf(ll.debug, LogLevelDebug, msg) // nolint: govet
 }
 
 // Debugf formats and emits a message if the logger is at or below LogLevelDebug
@@ -125,7 +125,7 @@ func (ll *DefaultLeveledLogger) Debugf(format string, args ...interface{}) {
 
 // Info emits the preformatted message if the logger is at or below LogLevelInfo
 func (ll *DefaultLeveledLogger) Info(msg string) {
-	ll.logf(ll.info, LogLevelInfo, msg)
+	ll.logf(ll.info, LogLevelInfo, msg) // nolint: govet
 }
 
 // Infof formats and emits a message if the logger is at or below LogLevelInfo
@@ -135,7 +135,7 @@ func (ll *DefaultLeveledLogger) Infof(format string, args ...interface{}) {
 
 // Warn emits the preformatted message if the logger is at or below LogLevelWarn
 func (ll *DefaultLeveledLogger) Warn(msg string) {
-	ll.logf(ll.warn, LogLevelWarn, msg)
+	ll.logf(ll.warn, LogLevelWarn, msg) // nolint: govet
 }
 
 // Warnf formats and emits a message if the logger is at or below LogLevelWarn
@@ -145,7 +145,7 @@ func (ll *DefaultLeveledLogger) Warnf(format string, args ...interface{}) {
 
 // Error emits the preformatted message if the logger is at or below LogLevelError
 func (ll *DefaultLeveledLogger) Error(msg string) {
-	ll.logf(ll.err, LogLevelError, msg)
+	ll.logf(ll.err, LogLevelError, msg) // nolint: govet
 }
 
 // Errorf formats and emits a message if the logger is at or below LogLevelError
