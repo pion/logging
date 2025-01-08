@@ -13,6 +13,8 @@ import (
 )
 
 func testNoDebugLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
+	t.Helper()
+
 	var outBuf bytes.Buffer
 	logger.WithOutput(&outBuf)
 
@@ -27,6 +29,8 @@ func testNoDebugLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 }
 
 func testDebugLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
+	t.Helper()
+
 	var outBuf bytes.Buffer
 	logger.WithOutput(&outBuf)
 
@@ -42,6 +46,8 @@ func testDebugLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 }
 
 func testWarnLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
+	t.Helper()
+
 	var outBuf bytes.Buffer
 	logger.WithOutput(&outBuf)
 
@@ -57,6 +63,8 @@ func testWarnLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 }
 
 func testErrorLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
+	t.Helper()
+
 	var outBuf bytes.Buffer
 	logger.WithOutput(&outBuf)
 
@@ -72,7 +80,7 @@ func testErrorLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 }
 
 func TestDefaultLoggerFactory(t *testing.T) {
-	f := logging.DefaultLoggerFactory{
+	factory := logging.DefaultLoggerFactory{
 		Writer:          os.Stderr,
 		DefaultLogLevel: logging.LogLevelWarn,
 		ScopeLevels: map[string]logging.LogLevel{
@@ -80,7 +88,7 @@ func TestDefaultLoggerFactory(t *testing.T) {
 		},
 	}
 
-	logger := f.NewLogger("baz")
+	logger := factory.NewLogger("baz")
 	bazLogger, ok := logger.(*logging.DefaultLeveledLogger)
 	if !ok {
 		t.Error("Invalid logger type")
@@ -89,7 +97,7 @@ func TestDefaultLoggerFactory(t *testing.T) {
 	testNoDebugLevel(t, bazLogger)
 	testWarnLevel(t, bazLogger)
 
-	logger = f.NewLogger("foo")
+	logger = factory.NewLogger("foo")
 	fooLogger, ok := logger.(*logging.DefaultLeveledLogger)
 	if !ok {
 		t.Error("Invalid logger type")
