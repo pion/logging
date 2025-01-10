@@ -213,7 +213,9 @@ func NewDefaultLoggerFactory() *DefaultLoggerFactory {
 		}
 
 		if strings.ToLower(env) == "all" {
-			factory.DefaultLogLevel = level
+			if factory.DefaultLogLevel < level {
+				factory.DefaultLogLevel = level
+			}
 
 			continue
 		}
