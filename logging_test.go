@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/pion/logging"
+	"github.com/stretchr/testify/assert"
 )
 
 func testNoDebugLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
@@ -19,13 +20,10 @@ func testNoDebugLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 	logger.WithOutput(&outBuf)
 
 	logger.Debug("this shouldn't be logged")
-	if outBuf.Len() > 0 {
-		t.Error("Debug was logged when it shouldn't have been")
-	}
+	assert.GreaterOrEqual(t, 0, outBuf.Len(), "Debug was logged when it shouldn't have been")
+
 	logger.Debugf("this shouldn't be logged")
-	if outBuf.Len() > 0 {
-		t.Error("Debug was logged when it shouldn't have been")
-	}
+	assert.GreaterOrEqual(t, 0, outBuf.Len(), "Debug was logged when it shouldn't have been")
 }
 
 func testDebugLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
@@ -36,13 +34,14 @@ func testDebugLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 
 	dbgMsg := "this is a debug message"
 	logger.Debug(dbgMsg)
-	if !strings.Contains(outBuf.String(), dbgMsg) {
-		t.Errorf("Expected to find %q in %q, but didn't", dbgMsg, outBuf.String())
-	}
+	assert.Truef(t, strings.Contains(outBuf.String(), dbgMsg),
+		"Expected to find %q in %q, but didn't", dbgMsg, outBuf.String())
+	assert.Truef(t, strings.Contains(outBuf.String(), dbgMsg),
+		"Expected to find %q in %q, but didn't", dbgMsg, outBuf.String())
+
 	logger.Debugf(dbgMsg) // nolint: govet
-	if !strings.Contains(outBuf.String(), dbgMsg) {
-		t.Errorf("Expected to find %q in %q, but didn't", dbgMsg, outBuf.String())
-	}
+	assert.Truef(t, strings.Contains(outBuf.String(), dbgMsg),
+		"Expected to find %q in %q, but didn't", dbgMsg, outBuf.String())
 }
 
 func testWarnLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
@@ -53,13 +52,12 @@ func testWarnLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 
 	warnMsg := "this is a warning message"
 	logger.Warn(warnMsg)
-	if !strings.Contains(outBuf.String(), warnMsg) {
-		t.Errorf("Expected to find %q in %q, but didn't", warnMsg, outBuf.String())
-	}
+	assert.Truef(t, strings.Contains(outBuf.String(), warnMsg),
+		"Expected to find %q in %q, but didn't", warnMsg, outBuf.String())
+
 	logger.Warnf(warnMsg) // nolint: govet
-	if !strings.Contains(outBuf.String(), warnMsg) {
-		t.Errorf("Expected to find %q in %q, but didn't", warnMsg, outBuf.String())
-	}
+	assert.Truef(t, strings.Contains(outBuf.String(), warnMsg),
+		"Expected to find %q in %q, but didn't", warnMsg, outBuf.String())
 }
 
 func testErrorLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
@@ -70,13 +68,12 @@ func testErrorLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 
 	errMsg := "this is an error message"
 	logger.Error(errMsg)
-	if !strings.Contains(outBuf.String(), errMsg) {
-		t.Errorf("Expected to find %q in %q, but didn't", errMsg, outBuf.String())
-	}
+	assert.Truef(t, strings.Contains(outBuf.String(), errMsg),
+		"Expected to find %q in %q but didn't", errMsg, outBuf.String())
+
 	logger.Errorf(errMsg) // nolint: govet
-	if !strings.Contains(outBuf.String(), errMsg) {
-		t.Errorf("Expected to find %q in %q, but didn't", errMsg, outBuf.String())
-	}
+	assert.Truef(t, strings.Contains(outBuf.String(), errMsg),
+		"Expected to find %q in %q but didn't", errMsg, outBuf.String())
 }
 
 func testTraceLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
@@ -87,13 +84,12 @@ func testTraceLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 
 	traceMsg := "trace message"
 	logger.Trace(traceMsg)
-	if !strings.Contains(outBuf.String(), traceMsg) {
-		t.Errorf("Expected to find %q in %q, but didn't", traceMsg, outBuf.String())
-	}
+	assert.Truef(t, strings.Contains(outBuf.String(), traceMsg),
+		"Expected to find %q in %q but didn't", traceMsg, outBuf.String())
+
 	logger.Tracef(traceMsg) // nolint: govet
-	if !strings.Contains(outBuf.String(), traceMsg) {
-		t.Errorf("Expected to find %q in %q, but didn't", traceMsg, outBuf.String())
-	}
+	assert.Truef(t, strings.Contains(outBuf.String(), traceMsg),
+		"Expected to find %q in %q but didn't", traceMsg, outBuf.String())
 }
 
 func testInfoLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
@@ -104,13 +100,12 @@ func testInfoLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 
 	infoMsg := "info message"
 	logger.Info(infoMsg)
-	if !strings.Contains(outBuf.String(), infoMsg) {
-		t.Errorf("Expected to find %q in %q, but didn't", infoMsg, outBuf.String())
-	}
+	assert.Truef(t, strings.Contains(outBuf.String(), infoMsg),
+		"Expected to find %q in %q but didn't", infoMsg, outBuf.String())
+
 	logger.Infof(infoMsg) // nolint: govet
-	if !strings.Contains(outBuf.String(), infoMsg) {
-		t.Errorf("Expected to find %q in %q, but didn't", infoMsg, outBuf.String())
-	}
+	assert.Truef(t, strings.Contains(outBuf.String(), infoMsg),
+		"Expected to find %q in %q but didn't", infoMsg, outBuf.String())
 }
 
 func testAllLevels(t *testing.T, logger *logging.DefaultLeveledLogger) {
@@ -134,18 +129,14 @@ func TestDefaultLoggerFactory(t *testing.T) {
 
 	logger := factory.NewLogger("baz")
 	bazLogger, ok := logger.(*logging.DefaultLeveledLogger)
-	if !ok {
-		t.Error("Invalid logger type")
-	}
+	assert.True(t, ok, "Invalid logger type")
 
 	testNoDebugLevel(t, bazLogger)
 	testWarnLevel(t, bazLogger)
 
 	logger = factory.NewLogger("foo")
 	fooLogger, ok := logger.(*logging.DefaultLeveledLogger)
-	if !ok {
-		t.Error("Invalid logger type")
-	}
+	assert.True(t, ok, "Invalid logger type")
 
 	testDebugLevel(t, fooLogger)
 }
@@ -170,34 +161,22 @@ func TestNewDefaultLoggerFactory(t *testing.T) {
 	traceLevel := factory.NewLogger("TRACE")
 
 	disabledLogger, ok := disabled.(*logging.DefaultLeveledLogger)
-	if !ok {
-		t.Error("Missing disabled logger")
-	}
+	assert.True(t, ok, "Missing disabled logger")
 
 	errorLogger, ok := errorLevel.(*logging.DefaultLeveledLogger)
-	if !ok {
-		t.Error("Missing error logger")
-	}
+	assert.True(t, ok, "Missing error logger")
 
 	warnLogger, ok := warnLevel.(*logging.DefaultLeveledLogger)
-	if !ok {
-		t.Error("Missing warn logger")
-	}
+	assert.True(t, ok, "Missing warn logger")
 
 	infoLogger, ok := infoLevel.(*logging.DefaultLeveledLogger)
-	if !ok {
-		t.Error("Missing info logger")
-	}
+	assert.True(t, ok, "Missing info logger")
 
 	debugLogger, ok := debugLevel.(*logging.DefaultLeveledLogger)
-	if !ok {
-		t.Error("Missing debug logger")
-	}
+	assert.True(t, ok, "Missing debug logger")
 
 	traceLogger, ok := traceLevel.(*logging.DefaultLeveledLogger)
-	if !ok {
-		t.Error("Missing trace logger")
-	}
+	assert.True(t, ok, "Missing trace logger")
 
 	testNoDebugLevel(t, disabledLogger)
 	testNoDebugLevel(t, errorLogger)
@@ -217,9 +196,7 @@ func TestNewDefaultLoggerFactoryLogAll(t *testing.T) {
 	factory := logging.NewDefaultLoggerFactory()
 
 	testAPI, ok := factory.NewLogger("test").(*logging.DefaultLeveledLogger)
-	if !ok {
-		t.Error("Invalid logger factory type")
-	}
+	assert.True(t, ok, "Invalid logger factory type")
 
 	testAllLevels(t, testAPI)
 }
@@ -230,19 +207,13 @@ func TestNewDefaultLoggerFactorySpecifcScopes(t *testing.T) {
 	factory := logging.NewDefaultLoggerFactory()
 
 	feature, ok := factory.NewLogger("feature").(*logging.DefaultLeveledLogger)
-	if !ok {
-		t.Error("Invalid logger factory type")
-	}
+	assert.True(t, ok, "Invalid logger factory type")
 
 	rtp, ok := factory.NewLogger("rtp-logger").(*logging.DefaultLeveledLogger)
-	if !ok {
-		t.Error("Invalid logger factory type")
-	}
+	assert.True(t, ok, "Invalid logger factory type")
 
 	noScope, ok := factory.NewLogger("no-scope").(*logging.DefaultLeveledLogger)
-	if !ok {
-		t.Error("Invalid logger factory type")
-	}
+	assert.True(t, ok, "Invalid logger factory type")
 
 	testDebugLevel(t, feature)
 	testDebugLevel(t, rtp)
@@ -262,9 +233,7 @@ func TestLogLevel(t *testing.T) {
 	logLevel := logging.LogLevelDisabled
 
 	logLevel.Set(logging.LogLevelError)
-	if logLevel.Get() != logging.LogLevelError {
-		t.Error("LogLevel was not set to LogLevelError")
-	}
+	assert.Equal(t, logging.LogLevelError, logLevel.Get(), "LogLevel was not set to LogLevelError")
 }
 
 func TestLogLevelString(t *testing.T) {
@@ -279,9 +248,7 @@ func TestLogLevelString(t *testing.T) {
 	}
 
 	for level, expectedStr := range expected {
-		if level.String() != expectedStr {
-			t.Errorf("Expected %q, got %q", expectedStr, level.String())
-		}
+		assert.Equal(t, expectedStr, level.String())
 	}
 }
 
