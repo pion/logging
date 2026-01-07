@@ -13,12 +13,25 @@ import (
 	"time"
 )
 
+// JSONLogger is an optional extension interface so users
+// can type-assert a LeveledLogger to JSONLogger to access slog.
+type JSONLogger interface {
+	LeveledLogger
+	Slog() *slog.Logger
+}
+
 // JSONLeveledLogger provides JSON structured logging using Go's slog library.
 type JSONLeveledLogger struct {
 	level  LogLevel
 	writer *loggerWriter
 	logger *slog.Logger
 	scope  string
+}
+
+var _ JSONLogger = (*JSONLeveledLogger)(nil)
+
+func (jl *JSONLeveledLogger) Slog() *slog.Logger {
+	return jl.logger
 }
 
 // NewJSONLeveledLoggerForScope returns a configured JSON LeveledLogger.
@@ -28,11 +41,12 @@ func NewJSONLeveledLoggerForScope(scope string, level LogLevel, writer io.Writer
 	}
 
 	// Create a JSON handler with custom options
-	logger := slog.New(newJSONHandlerHelper(writer))
+	lw := &loggerWriter{output: writer}
+	logger := slog.New(newJSONHandlerHelper(lw))
 
 	return &JSONLeveledLogger{
 		level:  level,
-		writer: &loggerWriter{output: writer},
+		writer: lw,
 		logger: logger,
 		scope:  scope,
 	}
@@ -41,9 +55,10 @@ func NewJSONLeveledLoggerForScope(scope string, level LogLevel, writer io.Writer
 // WithOutput is a chainable configuration function which sets the logger's
 // logging output to the supplied io.Writer.
 func (jl *JSONLeveledLogger) WithOutput(output io.Writer) *JSONLeveledLogger {
+	if output == nil {
+		output = os.Stderr
+	}
 	jl.writer.SetOutput(output)
-	// Recreate the logger with the new writer
-	jl.logger = slog.New(newJSONHandlerHelper(output))
 
 	return jl
 }
@@ -262,9 +277,7 @@ func NewJSONLoggerFactory() *JSONLoggerFactory {
 func (f *JSONLoggerFactory) NewLogger(scope string) LeveledLogger {
 	logLevel := f.DefaultLogLevel
 	if f.ScopeLevels != nil {
-		scopeLevel, found := f.ScopeLevels[scope]
-
-		if found {
+		if scopeLevel, found := f.ScopeLevels[scope]; found {
 			logLevel = scopeLevel
 		}
 	}
