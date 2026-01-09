@@ -11,8 +11,7 @@ import (
 
 func main() {
 	// Create a JSON logger factory
-	factory := logging.NewJSONLoggerFactory()
-	factory.Writer = os.Stdout // Output to stdout for this example
+	factory := logging.NewJSONLoggerFactory(logging.WithJSONWriter(os.Stdout))
 
 	// Create loggers for different scopes
 	apiLogger := factory.NewLogger("api")

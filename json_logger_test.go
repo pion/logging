@@ -6,6 +6,8 @@ package logging
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"strings"
@@ -15,7 +17,7 @@ import (
 )
 
 func TestJSONLoggerLevels(t *testing.T) {
-	logger := NewJSONLeveledLoggerForScope("test", LogLevelTrace, os.Stderr)
+	logger := newJSONLeveledLoggerForScope("test", LogLevelTrace, os.Stderr)
 
 	var outBuf bytes.Buffer
 	logger.WithOutput(&outBuf)
@@ -61,7 +63,7 @@ func TestJSONLoggerLevels(t *testing.T) {
 }
 
 func TestJSONLoggerFormatting(t *testing.T) {
-	logger := NewJSONLeveledLoggerForScope("test", LogLevelTrace, os.Stderr)
+	logger := newJSONLeveledLoggerForScope("test", LogLevelTrace, os.Stderr)
 
 	var outBuf bytes.Buffer
 	logger.WithOutput(&outBuf)
@@ -76,7 +78,7 @@ func TestJSONLoggerFormatting(t *testing.T) {
 }
 
 func TestJSONLoggerLevelFiltering(t *testing.T) {
-	logger := NewJSONLeveledLoggerForScope("test", LogLevelTrace, os.Stderr)
+	logger := newJSONLeveledLoggerForScope("test", LogLevelTrace, os.Stderr)
 
 	var outBuf bytes.Buffer
 	logger.WithOutput(&outBuf)
@@ -98,16 +100,16 @@ func TestJSONLoggerLevelFiltering(t *testing.T) {
 }
 
 func TestJSONLoggerFactory(t *testing.T) {
-	factory := JSONLoggerFactory{
-		Writer:          os.Stderr,
-		DefaultLogLevel: LogLevelWarn,
-		ScopeLevels: map[string]LogLevel{
+	factory := jsonLoggerFactory{
+		writer:          os.Stderr,
+		defaultLogLevel: LogLevelWarn,
+		scopeLevels: map[string]LogLevel{
 			"foo": LogLevelDebug,
 		},
 	}
 
 	logger := factory.NewLogger("baz")
-	bazLogger, ok := logger.(*JSONLeveledLogger)
+	bazLogger, ok := logger.(*jsonLeveledLogger)
 	assert.True(t, ok, "Invalid logger type")
 
 	// Test that baz logger respects WARN level
@@ -117,7 +119,7 @@ func TestJSONLoggerFactory(t *testing.T) {
 	assert.Equal(t, 0, outBuf.Len(), "Debug message should not be logged at WARN level")
 
 	logger = factory.NewLogger("foo")
-	fooLogger, ok := logger.(*JSONLeveledLogger)
+	fooLogger, ok := logger.(*jsonLeveledLogger)
 	assert.True(t, ok, "Invalid logger type")
 
 	// Test that foo logger respects DEBUG level
@@ -126,6 +128,12 @@ func TestJSONLoggerFactory(t *testing.T) {
 	fooLogger.Debug("debug message")
 	output := outBuf.String()
 	assert.True(t, strings.Contains(output, "debug message"), "Debug message should be logged at DEBUG level")
+}
+
+func TestNewJSONLoggerFactoryReturnsPrivateType(t *testing.T) {
+	factory := NewJSONLoggerFactory()
+
+	assert.Equal(t, "*logging.jsonLoggerFactory", fmt.Sprintf("%T", factory))
 }
 
 func TestNewJSONLoggerFactory(t *testing.T) {
@@ -138,22 +146,22 @@ func TestNewJSONLoggerFactory(t *testing.T) {
 	debugLevel := factory.NewLogger("DEBUG")
 	traceLevel := factory.NewLogger("TRACE")
 
-	disabledLogger, ok := disabled.(*JSONLeveledLogger)
+	disabledLogger, ok := disabled.(*jsonLeveledLogger)
 	assert.True(t, ok, "Missing disabled logger")
 
-	errorLogger, ok := errorLevel.(*JSONLeveledLogger)
+	errorLogger, ok := errorLevel.(*jsonLeveledLogger)
 	assert.True(t, ok, "Missing error logger")
 
-	_, ok = warnLevel.(*JSONLeveledLogger)
+	_, ok = warnLevel.(*jsonLeveledLogger)
 	assert.True(t, ok, "Missing warn logger")
 
-	_, ok = infoLevel.(*JSONLeveledLogger)
+	_, ok = infoLevel.(*jsonLeveledLogger)
 	assert.True(t, ok, "Missing info logger")
 
-	_, ok = debugLevel.(*JSONLeveledLogger)
+	_, ok = debugLevel.(*jsonLeveledLogger)
 	assert.True(t, ok, "Missing debug logger")
 
-	_, ok = traceLevel.(*JSONLeveledLogger)
+	_, ok = traceLevel.(*jsonLeveledLogger)
 	assert.True(t, ok, "Missing trace logger")
 
 	// Test that all loggers are properly configured
@@ -169,8 +177,42 @@ func TestNewJSONLoggerFactory(t *testing.T) {
 	assert.True(t, strings.Contains(output, "error message"), "Error logger should log error messages")
 }
 
+func TestNewJSONLoggerFactoryOptions(t *testing.T) {
+	var outBuf bytes.Buffer
+
+	factory := unwrapJSONFactory(t, NewJSONLoggerFactory(
+		WithJSONWriter(&outBuf),
+		WithJSONDefaultLevel(LogLevelDebug),
+		WithJSONScopeLevels(map[string]LogLevel{"CustomScope": LogLevelTrace}),
+	))
+
+	assert.Equal(t, LogLevelDebug, factory.defaultLogLevel)
+	assert.Equal(t, LogLevelTrace, factory.scopeLevels["customscope"])
+
+	logger := factory.NewLogger("customscope")
+	logger.Debug("configured logger output")
+
+	assert.Contains(t, outBuf.String(), "configured logger output")
+}
+
+func TestJSONLoggerFactorySupportsWithOutputInterface(t *testing.T) {
+	factory := NewJSONLoggerFactory()
+	logger := factory.NewLogger("interface-scope")
+
+	withOutput, ok := logger.(interface {
+		WithOutput(io.Writer) LeveledLogger
+	})
+	assert.True(t, ok, "Logger should allow WithOutput without concrete type")
+
+	var outBuf bytes.Buffer
+	withOutput.WithOutput(&outBuf)
+
+	logger.Error("interface error")
+	assert.Contains(t, outBuf.String(), "interface error")
+}
+
 func TestJSONLoggerTraceOutput(t *testing.T) {
-	logger := NewJSONLeveledLoggerForScope("trace-scope", LogLevelTrace, os.Stderr)
+	logger := newJSONLeveledLoggerForScope("trace-scope", LogLevelTrace, os.Stderr)
 	var outBuf bytes.Buffer
 	logger.WithOutput(&outBuf)
 
@@ -195,7 +237,7 @@ func TestJSONLoggerTraceOutput(t *testing.T) {
 }
 
 func TestJSONLoggerStructuredOutput(t *testing.T) {
-	logger := NewJSONLeveledLoggerForScope("test-scope", LogLevelInfo, os.Stderr)
+	logger := newJSONLeveledLoggerForScope("test-scope", LogLevelInfo, os.Stderr)
 	var outBuf bytes.Buffer
 	logger.WithOutput(&outBuf)
 
@@ -220,12 +262,12 @@ func TestJSONLoggerStructuredOutput(t *testing.T) {
 }
 
 func TestJSONLeveledLogger_logf_IncludesAdditionalArgs(t *testing.T) {
-	factory := NewJSONLoggerFactory()
-	factory.Writer = os.Stderr
-	factory.DefaultLogLevel = LogLevelTrace
+	factory := newJSONLoggerFactory()
+	factory.writer = os.Stderr
+	factory.defaultLogLevel = LogLevelTrace
 
 	l := factory.NewLogger("test-scope")
-	jl, ok := l.(*JSONLeveledLogger)
+	jl, ok := l.(*jsonLeveledLogger)
 	assert.True(t, ok, "Invalid logger type")
 
 	var outBuf bytes.Buffer
@@ -267,6 +309,15 @@ func clearLogEnv(t *testing.T) {
 	}
 }
 
+func unwrapJSONFactory(t *testing.T, factory LoggerFactory) *jsonLoggerFactory {
+	t.Helper()
+
+	jf, ok := factory.(*jsonLoggerFactory)
+	assert.True(t, ok, "Factory should be jsonLoggerFactory")
+
+	return jf
+}
+
 func TestNewJSONLoggerFactory_AllSetsDefaultToMaxLevel(t *testing.T) {
 	clearLogEnv(t)
 
@@ -274,10 +325,10 @@ func TestNewJSONLoggerFactory_AllSetsDefaultToMaxLevel(t *testing.T) {
 	t.Setenv("PION_LOG_DEBUG", "ALL")
 	t.Setenv("PION_LOG_TRACE", "all")
 
-	factory := NewJSONLoggerFactory()
+	factory := unwrapJSONFactory(t, NewJSONLoggerFactory())
 
-	assert.Equal(t, LogLevelTrace, factory.DefaultLogLevel)
-	assert.Equal(t, 0, len(factory.ScopeLevels))
+	assert.Equal(t, LogLevelTrace, factory.defaultLogLevel)
+	assert.Equal(t, 0, len(factory.scopeLevels))
 }
 
 func TestNewJSONLoggerFactory_AllDoesNotLowerDefaultLevel(t *testing.T) {
@@ -285,8 +336,8 @@ func TestNewJSONLoggerFactory_AllDoesNotLowerDefaultLevel(t *testing.T) {
 
 	t.Setenv("PION_LOG_DISABLE", "all")
 
-	factory := NewJSONLoggerFactory()
-	assert.Equal(t, LogLevelError, factory.DefaultLogLevel)
+	factory := unwrapJSONFactory(t, NewJSONLoggerFactory())
+	assert.Equal(t, LogLevelError, factory.defaultLogLevel)
 }
 
 func TestNewJSONLoggerFactory_ScopesAreSplitAndLowercased(t *testing.T) {
@@ -294,12 +345,12 @@ func TestNewJSONLoggerFactory_ScopesAreSplitAndLowercased(t *testing.T) {
 
 	t.Setenv("PION_LOG_DEBUG", "Foo,BAR")
 
-	factory := NewJSONLoggerFactory()
+	factory := unwrapJSONFactory(t, NewJSONLoggerFactory())
 
-	assert.Equal(t, LogLevelError, factory.DefaultLogLevel)
+	assert.Equal(t, LogLevelError, factory.defaultLogLevel)
 
-	assert.Equal(t, LogLevelDebug, factory.ScopeLevels["foo"])
-	assert.Equal(t, LogLevelDebug, factory.ScopeLevels["bar"])
+	assert.Equal(t, LogLevelDebug, factory.scopeLevels["foo"])
+	assert.Equal(t, LogLevelDebug, factory.scopeLevels["bar"])
 }
 
 func TestNewJSONLoggerFactory_AllAndScopedInteract(t *testing.T) {
@@ -309,13 +360,13 @@ func TestNewJSONLoggerFactory_AllAndScopedInteract(t *testing.T) {
 
 	t.Setenv("PION_LOG_DEBUG", "foo")
 
-	factory := NewJSONLoggerFactory()
+	factory := unwrapJSONFactory(t, NewJSONLoggerFactory())
 
-	assert.Equal(t, LogLevelWarn, factory.DefaultLogLevel)
-	assert.Equal(t, LogLevelDebug, factory.ScopeLevels["foo"])
+	assert.Equal(t, LogLevelWarn, factory.defaultLogLevel)
+	assert.Equal(t, LogLevelDebug, factory.scopeLevels["foo"])
 
-	foo := factory.NewLogger("foo").(*JSONLeveledLogger) //nolint:forcetypeassert
-	bar := factory.NewLogger("bar").(*JSONLeveledLogger) //nolint:forcetypeassert
+	foo := factory.NewLogger("foo").(*jsonLeveledLogger) //nolint:forcetypeassert
+	bar := factory.NewLogger("bar").(*jsonLeveledLogger) //nolint:forcetypeassert
 
 	assert.Equal(t, LogLevelDebug, foo.level.Get(), "scope override should win")
 	assert.Equal(t, LogLevelWarn, bar.level.Get(), "default should apply when no scope override")
@@ -327,6 +378,6 @@ func TestNewJSONLoggerFactory_Fallback(t *testing.T) {
 	t.Setenv("PION_LOG_INFO", "")
 	t.Setenv("PIONS_LOG_INFO", "all")
 
-	factory := NewJSONLoggerFactory()
-	assert.Equal(t, LogLevelInfo, factory.DefaultLogLevel)
+	factory := unwrapJSONFactory(t, NewJSONLoggerFactory())
+	assert.Equal(t, LogLevelInfo, factory.defaultLogLevel)
 }

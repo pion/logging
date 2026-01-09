@@ -13,29 +13,22 @@ import (
 	"time"
 )
 
-// JSONLogger is an optional extension interface so users
-// can type-assert a LeveledLogger to JSONLogger to access slog.
-type JSONLogger interface {
-	LeveledLogger
-	Slog() *slog.Logger
-}
-
-// JSONLeveledLogger provides JSON structured logging using Go's slog library.
-type JSONLeveledLogger struct {
+// jsonLeveledLogger provides JSON structured logging using Go's slog library.
+type jsonLeveledLogger struct {
 	level  LogLevel
 	writer *loggerWriter
 	logger *slog.Logger
 	scope  string
 }
 
-var _ JSONLogger = (*JSONLeveledLogger)(nil)
+var _ LeveledLogger = (*jsonLeveledLogger)(nil)
 
-func (jl *JSONLeveledLogger) Slog() *slog.Logger {
+func (jl *jsonLeveledLogger) Slog() *slog.Logger {
 	return jl.logger
 }
 
-// NewJSONLeveledLoggerForScope returns a configured JSON LeveledLogger.
-func NewJSONLeveledLoggerForScope(scope string, level LogLevel, writer io.Writer) *JSONLeveledLogger {
+// newJSONLeveledLoggerForScope returns a configured JSON LeveledLogger.
+func newJSONLeveledLoggerForScope(scope string, level LogLevel, writer io.Writer) *jsonLeveledLogger {
 	if writer == nil {
 		writer = os.Stderr
 	}
@@ -44,7 +37,7 @@ func NewJSONLeveledLoggerForScope(scope string, level LogLevel, writer io.Writer
 	lw := &loggerWriter{output: writer}
 	logger := slog.New(newJSONHandlerHelper(lw))
 
-	return &JSONLeveledLogger{
+	return &jsonLeveledLogger{
 		level:  level,
 		writer: lw,
 		logger: logger,
@@ -54,7 +47,7 @@ func NewJSONLeveledLoggerForScope(scope string, level LogLevel, writer io.Writer
 
 // WithOutput is a chainable configuration function which sets the logger's
 // logging output to the supplied io.Writer.
-func (jl *JSONLeveledLogger) WithOutput(output io.Writer) *JSONLeveledLogger {
+func (jl *jsonLeveledLogger) WithOutput(output io.Writer) LeveledLogger {
 	if output == nil {
 		output = os.Stderr
 	}
@@ -93,12 +86,12 @@ func newJSONHandlerHelper(w io.Writer) slog.Handler {
 }
 
 // SetLevel sets the logger's logging level.
-func (jl *JSONLeveledLogger) SetLevel(newLevel LogLevel) {
+func (jl *jsonLeveledLogger) SetLevel(newLevel LogLevel) {
 	jl.level.Set(newLevel)
 }
 
 // logf is the internal logging function that handles level checking and formatting.
-func (jl *JSONLeveledLogger) logf(level slog.Level, msg string, args ...any) {
+func (jl *jsonLeveledLogger) logf(level slog.Level, msg string, args ...any) {
 	if jl.level.Get() < logLevelToPionLevel(level) {
 		return
 	}
@@ -117,7 +110,7 @@ func (jl *JSONLeveledLogger) logf(level slog.Level, msg string, args ...any) {
 }
 
 // logfWithFormatf formats the message and calls logf.
-func (jl *JSONLeveledLogger) logfWithFormatf(level slog.Level, format string, args ...any) {
+func (jl *jsonLeveledLogger) logfWithFormatf(level slog.Level, format string, args ...any) {
 	if jl.level.Get() < logLevelToPionLevel(level) {
 		return
 	}
@@ -173,68 +166,125 @@ func logLevelToPionLevel(level slog.Level) LogLevel {
 }
 
 // Trace emits the preformatted message if the logger is at or below LogLevelTrace.
-func (jl *JSONLeveledLogger) Trace(msg string) {
+func (jl *jsonLeveledLogger) Trace(msg string) {
 	jl.logf(slog.Level(-8), msg) // slog.LevelTrace is -8
 }
 
 // Tracef formats and emits a message if the logger is at or below LogLevelTrace.
-func (jl *JSONLeveledLogger) Tracef(format string, args ...any) {
+func (jl *jsonLeveledLogger) Tracef(format string, args ...any) {
 	jl.logfWithFormatf(slog.Level(-8), format, args...) // slog.LevelTrace is -8
 }
 
 // Debug emits the preformatted message if the logger is at or below LogLevelDebug.
-func (jl *JSONLeveledLogger) Debug(msg string) {
+func (jl *jsonLeveledLogger) Debug(msg string) {
 	jl.logf(slog.LevelDebug, msg)
 }
 
 // Debugf formats and emits a message if the logger is at or below LogLevelDebug.
-func (jl *JSONLeveledLogger) Debugf(format string, args ...any) {
+func (jl *jsonLeveledLogger) Debugf(format string, args ...any) {
 	jl.logfWithFormatf(slog.LevelDebug, format, args...)
 }
 
 // Info emits the preformatted message if the logger is at or below LogLevelInfo.
-func (jl *JSONLeveledLogger) Info(msg string) {
+func (jl *jsonLeveledLogger) Info(msg string) {
 	jl.logf(slog.LevelInfo, msg)
 }
 
 // Infof formats and emits a message if the logger is at or below LogLevelInfo.
-func (jl *JSONLeveledLogger) Infof(format string, args ...any) {
+func (jl *jsonLeveledLogger) Infof(format string, args ...any) {
 	jl.logfWithFormatf(slog.LevelInfo, format, args...)
 }
 
 // Warn emits the preformatted message if the logger is at or below LogLevelWarn.
-func (jl *JSONLeveledLogger) Warn(msg string) {
+func (jl *jsonLeveledLogger) Warn(msg string) {
 	jl.logf(slog.LevelWarn, msg)
 }
 
 // Warnf formats and emits a message if the logger is at or below LogLevelWarn.
-func (jl *JSONLeveledLogger) Warnf(format string, args ...any) {
+func (jl *jsonLeveledLogger) Warnf(format string, args ...any) {
 	jl.logfWithFormatf(slog.LevelWarn, format, args...)
 }
 
 // Error emits the preformatted message if the logger is at or below LogLevelError.
-func (jl *JSONLeveledLogger) Error(msg string) {
+func (jl *jsonLeveledLogger) Error(msg string) {
 	jl.logf(slog.LevelError, msg)
 }
 
 // Errorf formats and emits a message if the logger is at or below LogLevelError.
-func (jl *JSONLeveledLogger) Errorf(format string, args ...any) {
+func (jl *jsonLeveledLogger) Errorf(format string, args ...any) {
 	jl.logfWithFormatf(slog.LevelError, format, args...)
 }
 
-// JSONLoggerFactory defines levels by scopes and creates new JSONLeveledLogger.
-type JSONLoggerFactory struct {
-	Writer          io.Writer
-	DefaultLogLevel LogLevel
-	ScopeLevels     map[string]LogLevel
+// jsonLoggerFactory defines levels by scopes and creates new jsonLeveledLogger.
+type jsonLoggerFactory struct {
+	writer          io.Writer
+	defaultLogLevel LogLevel
+	scopeLevels     map[string]LogLevel
 }
 
-// NewJSONLoggerFactory creates a new JSONLoggerFactory.
-func NewJSONLoggerFactory() *JSONLoggerFactory {
-	factory := JSONLoggerFactory{}
-	factory.DefaultLogLevel = LogLevelError
-	factory.ScopeLevels = make(map[string]LogLevel)
-	factory.Writer = os.Stderr
+var _ LoggerFactory = (*jsonLoggerFactory)(nil)
+
+// JSONLoggerFactoryOption configures the JSON LoggerFactory.
+type JSONLoggerFactoryOption func(*jsonLoggerFactory)
+
+// WithJSONWriter overrides the writer used by JSON loggers.
+func WithJSONWriter(writer io.Writer) JSONLoggerFactoryOption {
+	return func(factory *jsonLoggerFactory) {
+		if writer == nil {
+			factory.writer = os.Stderr
+
+			return
+		}
+
+		factory.writer = writer
+	}
+}
+
+// WithJSONDefaultLevel overrides the default log level used by JSON loggers.
+func WithJSONDefaultLevel(level LogLevel) JSONLoggerFactoryOption {
+	return func(factory *jsonLoggerFactory) {
+		factory.defaultLogLevel = level
+	}
+}
+
+// WithJSONScopeLevels sets specific log levels for scopes, overriding env values.
+func WithJSONScopeLevels(levels map[string]LogLevel) JSONLoggerFactoryOption {
+	return func(factory *jsonLoggerFactory) {
+		if levels == nil {
+			return
+		}
+
+		if factory.scopeLevels == nil {
+			factory.scopeLevels = make(map[string]LogLevel, len(levels))
+		}
+
+		for scope, level := range levels {
+			factory.scopeLevels[strings.ToLower(scope)] = level
+		}
+	}
+}
+
+// NewJSONLoggerFactory creates a new LoggerFactory that emits JSON logs.
+func NewJSONLoggerFactory(options ...JSONLoggerFactoryOption) LoggerFactory {
+	factory := newJSONLoggerFactory()
+
+	for _, option := range options {
+		if option == nil {
+			continue
+		}
+
+		option(factory)
+	}
+
+	return factory
+}
+
+// newJSONLoggerFactory creates a new JSON LoggerFactory.
+func newJSONLoggerFactory() *jsonLoggerFactory {
+	factory := jsonLoggerFactory{}
+	factory.defaultLogLevel = LogLevelError
+	factory.scopeLevels = make(map[string]LogLevel)
+	factory.writer = os.Stderr
 
 	logLevels := map[string]LogLevel{
 		"DISABLE": LogLevelDisabled,
@@ -257,8 +307,8 @@ func NewJSONLoggerFactory() *JSONLoggerFactory {
 		}
 
 		if strings.ToLower(env) == "all" {
-			if factory.DefaultLogLevel < level {
-				factory.DefaultLogLevel = level
+			if factory.defaultLogLevel < level {
+				factory.defaultLogLevel = level
 			}
 
 			continue
@@ -266,7 +316,7 @@ func NewJSONLoggerFactory() *JSONLoggerFactory {
 
 		scopes := strings.Split(strings.ToLower(env), ",")
 		for _, scope := range scopes {
-			factory.ScopeLevels[scope] = level
+			factory.scopeLevels[scope] = level
 		}
 	}
 
@@ -274,13 +324,13 @@ func NewJSONLoggerFactory() *JSONLoggerFactory {
 }
 
 // NewLogger returns a configured JSON LeveledLogger for the given scope.
-func (f *JSONLoggerFactory) NewLogger(scope string) LeveledLogger {
-	logLevel := f.DefaultLogLevel
-	if f.ScopeLevels != nil {
-		if scopeLevel, found := f.ScopeLevels[scope]; found {
+func (f *jsonLoggerFactory) NewLogger(scope string) LeveledLogger {
+	logLevel := f.defaultLogLevel
+	if f.scopeLevels != nil {
+		if scopeLevel, found := f.scopeLevels[scope]; found {
 			logLevel = scopeLevel
 		}
 	}
 
-	return NewJSONLeveledLoggerForScope(scope, logLevel, f.Writer)
+	return newJSONLeveledLoggerForScope(scope, logLevel, f.writer)
 }
