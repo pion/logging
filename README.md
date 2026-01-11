@@ -16,6 +16,70 @@
 </p>
 <br>
 
+## Features
+
+- **Text Logging**: Traditional text-based logging with customizable prefixes and levels
+- **JSON Logging**: Structured JSON logging using Go's `slog` library (Go 1.21+)
+- **Level-based Filtering**: Support for TRACE, DEBUG, INFO, WARN, ERROR, and DISABLED levels
+- **Scope-based Configuration**: Different log levels for different scopes/components
+- **Environment Variable Configuration**: Configure log levels via environment variables
+- **Thread-safe**: All logging operations are thread-safe
+
+## Usage
+
+### Text Logging (Default)
+
+```go
+import "github.com/pion/logging"
+
+// Create a logger factory
+factory := logging.NewDefaultLoggerFactory()
+
+// Create loggers for different scopes
+apiLogger := factory.NewLogger("api")
+dbLogger := factory.NewLogger("database")
+
+// Log messages
+apiLogger.Info("API server started")
+apiLogger.Debug("Processing request")
+dbLogger.Error("Database connection failed")
+```
+
+### JSON Logging
+
+```go
+import "github.com/pion/logging"
+
+// Create a JSON logger factory
+factory := logging.NewJSONLoggerFactory()
+
+// Create loggers for different scopes
+apiLogger := factory.NewLogger("api")
+dbLogger := factory.NewLogger("database")
+
+// Log messages with structured data
+apiLogger.Info("API server started")
+apiLogger.Debug("Processing request", "method", "GET", "path", "/users")
+dbLogger.Error("Database connection failed", "error", "connection timeout")
+```
+
+### Environment Variable Configuration
+
+Set environment variables to configure log levels:
+
+```bash
+# Enable all log levels
+export PION_LOG_TRACE=all
+export PION_LOG_DEBUG=all
+export PION_LOG_INFO=all
+export PION_LOG_WARN=all
+export PION_LOG_ERROR=all
+
+# Enable specific scopes
+export PION_LOG_DEBUG=api,database
+export PION_LOG_INFO=feature1,feature2
+```
+
 ### Roadmap
 The library is used as a part of our WebRTC implementation. Please refer to that [roadmap](https://github.com/pion/webrtc/issues/9) to track our major milestones.
 
