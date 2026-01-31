@@ -10,7 +10,6 @@ import (
 	"log/slog"
 	"os"
 	"strings"
-	"time"
 )
 
 // jsonLeveledLogger provides JSON structured logging using Go's slog library.
@@ -63,11 +62,6 @@ func newJSONHandlerHelper(w io.Writer) slog.Handler {
 		ReplaceAttr: func(_ []string, attr slog.Attr) slog.Attr {
 			// Customize timestamp format
 			switch attr.Key {
-			case slog.TimeKey:
-				attr.Value = slog.StringValue(attr.Value.Time().Format(time.RFC3339))
-
-				return attr
-
 			case slog.LevelKey:
 				if lvl, ok := attr.Value.Any().(slog.Level); ok {
 					attr.Value = slogLevelToSlogStringValue(lvl)
