@@ -17,7 +17,7 @@ import (
 )
 
 func TestJSONLoggerLevels(t *testing.T) {
-	logger := newJSONLeveledLoggerForScope("test", LogLevelTrace, os.Stderr)
+	logger := newJSONLeveledLoggerForScope("test", LogLevelTrace, os.Stderr, false)
 
 	var outBuf bytes.Buffer
 	logger.WithOutput(&outBuf)
@@ -63,7 +63,7 @@ func TestJSONLoggerLevels(t *testing.T) {
 }
 
 func TestJSONLoggerFormatting(t *testing.T) {
-	logger := newJSONLeveledLoggerForScope("test", LogLevelTrace, os.Stderr)
+	logger := newJSONLeveledLoggerForScope("test", LogLevelTrace, os.Stderr, false)
 
 	var outBuf bytes.Buffer
 	logger.WithOutput(&outBuf)
@@ -78,7 +78,7 @@ func TestJSONLoggerFormatting(t *testing.T) {
 }
 
 func TestJSONLoggerLevelFiltering(t *testing.T) {
-	logger := newJSONLeveledLoggerForScope("test", LogLevelTrace, os.Stderr)
+	logger := newJSONLeveledLoggerForScope("test", LogLevelTrace, os.Stderr, false)
 
 	var outBuf bytes.Buffer
 	logger.WithOutput(&outBuf)
@@ -212,7 +212,7 @@ func TestJSONLoggerFactorySupportsWithOutputInterface(t *testing.T) {
 }
 
 func TestJSONLoggerTraceOutput(t *testing.T) {
-	logger := newJSONLeveledLoggerForScope("trace-scope", LogLevelTrace, os.Stderr)
+	logger := newJSONLeveledLoggerForScope("trace-scope", LogLevelTrace, os.Stderr, false)
 	var outBuf bytes.Buffer
 	logger.WithOutput(&outBuf)
 
@@ -237,7 +237,7 @@ func TestJSONLoggerTraceOutput(t *testing.T) {
 }
 
 func TestJSONLoggerStructuredOutput(t *testing.T) {
-	logger := newJSONLeveledLoggerForScope("test-scope", LogLevelInfo, os.Stderr)
+	logger := newJSONLeveledLoggerForScope("test-scope", LogLevelInfo, os.Stderr, false)
 	var outBuf bytes.Buffer
 	logger.WithOutput(&outBuf)
 

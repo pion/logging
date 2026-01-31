@@ -28,14 +28,14 @@ func (jl *jsonLeveledLogger) Slog() *slog.Logger {
 }
 
 // newJSONLeveledLoggerForScope returns a configured JSON LeveledLogger.
-func newJSONLeveledLoggerForScope(scope string, level LogLevel, writer io.Writer) *jsonLeveledLogger {
+func newJSONLeveledLoggerForScope(scope string, level LogLevel, writer io.Writer, customizeTimestamp bool) *jsonLeveledLogger {
 	if writer == nil {
 		writer = os.Stderr
 	}
 
 	// Create a JSON handler with custom options
 	lw := &loggerWriter{output: writer}
-	logger := slog.New(newJSONHandlerHelper(lw))
+	logger := slog.New(newJSONHandlerHelper(lw, customizeTimestamp))
 
 	return &jsonLeveledLogger{
 		level:  level,
@@ -57,14 +57,16 @@ func (jl *jsonLeveledLogger) WithOutput(output io.Writer) LeveledLogger {
 }
 
 // newJSONHandlerHelper creates a new JSON slog.Handler with custom formatting.
-func newJSONHandlerHelper(w io.Writer) slog.Handler {
+func newJSONHandlerHelper(w io.Writer, customizeTimestamp bool) slog.Handler {
 	return slog.NewJSONHandler(w, &slog.HandlerOptions{
 		Level: slog.Level(-8), // Allow all levels, filter ourselves
 		ReplaceAttr: func(_ []string, attr slog.Attr) slog.Attr {
 			// Customize timestamp format
 			switch attr.Key {
 			case slog.TimeKey:
-				attr.Value = slog.StringValue(attr.Value.Time().Format(time.RFC3339))
+				if customizeTimestamp {
+					attr.Value = slog.StringValue(attr.Value.Time().Format(time.RFC3339))
+				}
 
 				return attr
 
@@ -217,9 +219,10 @@ func (jl *jsonLeveledLogger) Errorf(format string, args ...any) {
 
 // jsonLoggerFactory defines levels by scopes and creates new jsonLeveledLogger.
 type jsonLoggerFactory struct {
-	writer          io.Writer
-	defaultLogLevel LogLevel
-	scopeLevels     map[string]LogLevel
+	writer             io.Writer
+	defaultLogLevel    LogLevel
+	scopeLevels        map[string]LogLevel
+	customizeTimestamp bool
 }
 
 var _ LoggerFactory = (*jsonLoggerFactory)(nil)
@@ -244,6 +247,12 @@ func WithJSONWriter(writer io.Writer) JSONLoggerFactoryOption {
 func WithJSONDefaultLevel(level LogLevel) JSONLoggerFactoryOption {
 	return func(factory *jsonLoggerFactory) {
 		factory.defaultLogLevel = level
+	}
+}
+
+func WithoutCustomTimestamp() JSONLoggerFactoryOption {
+	return func(jlf *jsonLoggerFactory) {
+		jlf.customizeTimestamp = false
 	}
 }
 
@@ -332,5 +341,5 @@ func (f *jsonLoggerFactory) NewLogger(scope string) LeveledLogger {
 		}
 	}
 
-	return newJSONLeveledLoggerForScope(scope, logLevel, f.writer)
+	return newJSONLeveledLoggerForScope(scope, logLevel, f.writer, f.customizeTimestamp)
 }
