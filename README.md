@@ -6,7 +6,7 @@
 <h4 align="center">The Pion logging library</h4>
 <p align="center">
   <a href="https://pion.ly"><img src="https://img.shields.io/badge/pion-logging-gray.svg?longCache=true&colorB=brightgreen" alt="Pion transport"></a>
-  <a href="https://discord.gg/PngbdqpFbt"><img src="https://img.shields.io/badge/join-us%20on%20discord-gray.svg?longCache=true&logo=discord&colorB=brightblue" alt="join us on Discord"></a> <a href="https://bsky.app/profile/pion.ly"><img src="https://img.shields.io/badge/follow-us%20on%20bluesky-gray.svg?longCache=true&logo=bluesky&colorB=brightblue" alt="Follow us on Bluesky"></a> 
+  <a href="https://discord.gg/PngbdqpFbt"><img src="https://img.shields.io/badge/join-us%20on%20discord-gray.svg?longCache=true&logo=discord&colorB=brightblue" alt="join us on Discord"></a> <a href="https://bsky.app/profile/pion.ly"><img src="https://img.shields.io/badge/follow-us%20on%20bluesky-gray.svg?longCache=true&logo=bluesky&colorB=brightblue" alt="Follow us on Bluesky"></a>
   <br>
   <img alt="GitHub Workflow Status" src="https://img.shields.io/github/actions/workflow/status/pion/logging/test.yaml">
   <a href="https://pkg.go.dev/github.com/pion/logging"><img src="https://pkg.go.dev/badge/github.com/pion/logging.svg" alt="Go Reference"></a>
@@ -58,9 +58,20 @@ apiLogger := factory.NewLogger("api")
 dbLogger := factory.NewLogger("database")
 
 // Log messages with structured data
+// Note that you can pass in a single string like this:
 apiLogger.Info("API server started")
-apiLogger.Debug("Processing request", "method", "GET", "path", "/users")
-dbLogger.Error("Database connection failed", "error", "connection timeout")
+
+// Or you can pass in multiple strings with printf style formatting.
+// NOTE: Key-value pairs are NOT logged as separate JSON fields.
+//       As a result, they are just appended to the msg field.
+// This example shows how to pass in multiple strings:
+	apiLogger.Debugf("Processing request method=%s path=%s", "GET", "/users")
+// outputs this:
+// {"time":"2026-01-31T15:28:58.751640584-05:00","level":"DEBUG","msg":"Processing request method=GET path=/users","scope":"api"}
+
+dbLogger.Errorf("Database connection failed reason=%s", "connection timeout")
+// outputs this:
+// {"time":"2026-01-31T15:28:58.751658047-05:00","level":"ERROR","msg":"Database connection failed reason=connection timeout","scope":"database"}
 ```
 
 ### Environment Variable Configuration
