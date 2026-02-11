@@ -112,7 +112,7 @@ func (ll *DefaultLeveledLogger) SetLevel(newLevel LogLevel) {
 
 // Trace emits the preformatted message if the logger is at or below LogLevelTrace.
 func (ll *DefaultLeveledLogger) Trace(msg string) {
-	ll.logf(ll.trace, LogLevelTrace, msg) // nolint: govet
+	ll.logf(ll.trace, LogLevelTrace, "%s", msg)
 }
 
 // Tracef formats and emits a message if the logger is at or below LogLevelTrace.
@@ -122,7 +122,7 @@ func (ll *DefaultLeveledLogger) Tracef(format string, args ...any) {
 
 // Debug emits the preformatted message if the logger is at or below LogLevelDebug.
 func (ll *DefaultLeveledLogger) Debug(msg string) {
-	ll.logf(ll.debug, LogLevelDebug, msg) // nolint: govet
+	ll.logf(ll.debug, LogLevelDebug, "%s", msg)
 }
 
 // Debugf formats and emits a message if the logger is at or below LogLevelDebug.
@@ -132,7 +132,7 @@ func (ll *DefaultLeveledLogger) Debugf(format string, args ...any) {
 
 // Info emits the preformatted message if the logger is at or below LogLevelInfo.
 func (ll *DefaultLeveledLogger) Info(msg string) {
-	ll.logf(ll.info, LogLevelInfo, msg) // nolint: govet
+	ll.logf(ll.info, LogLevelInfo, "%s", msg)
 }
 
 // Infof formats and emits a message if the logger is at or below LogLevelInfo.
@@ -142,7 +142,7 @@ func (ll *DefaultLeveledLogger) Infof(format string, args ...any) {
 
 // Warn emits the preformatted message if the logger is at or below LogLevelWarn.
 func (ll *DefaultLeveledLogger) Warn(msg string) {
-	ll.logf(ll.warn, LogLevelWarn, msg) // nolint: govet
+	ll.logf(ll.warn, LogLevelWarn, "%s", msg)
 }
 
 // Warnf formats and emits a message if the logger is at or below LogLevelWarn.
@@ -152,7 +152,7 @@ func (ll *DefaultLeveledLogger) Warnf(format string, args ...any) {
 
 // Error emits the preformatted message if the logger is at or below LogLevelError.
 func (ll *DefaultLeveledLogger) Error(msg string) {
-	ll.logf(ll.err, LogLevelError, msg) // nolint: govet
+	ll.logf(ll.err, LogLevelError, "%s", msg)
 }
 
 // Errorf formats and emits a message if the logger is at or below LogLevelError.

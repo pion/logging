@@ -39,7 +39,7 @@ func testDebugLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 	assert.Truef(t, strings.Contains(outBuf.String(), dbgMsg),
 		"Expected to find %q in %q, but didn't", dbgMsg, outBuf.String())
 
-	logger.Debugf(dbgMsg) // nolint: govet
+	logger.Debugf("%s", dbgMsg)
 	assert.Truef(t, strings.Contains(outBuf.String(), dbgMsg),
 		"Expected to find %q in %q, but didn't", dbgMsg, outBuf.String())
 }
@@ -55,7 +55,7 @@ func testWarnLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 	assert.Truef(t, strings.Contains(outBuf.String(), warnMsg),
 		"Expected to find %q in %q, but didn't", warnMsg, outBuf.String())
 
-	logger.Warnf(warnMsg) // nolint: govet
+	logger.Warnf("%s", warnMsg)
 	assert.Truef(t, strings.Contains(outBuf.String(), warnMsg),
 		"Expected to find %q in %q, but didn't", warnMsg, outBuf.String())
 }
@@ -71,7 +71,7 @@ func testErrorLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 	assert.Truef(t, strings.Contains(outBuf.String(), errMsg),
 		"Expected to find %q in %q but didn't", errMsg, outBuf.String())
 
-	logger.Errorf(errMsg) // nolint: govet
+	logger.Errorf("%s", errMsg)
 	assert.Truef(t, strings.Contains(outBuf.String(), errMsg),
 		"Expected to find %q in %q but didn't", errMsg, outBuf.String())
 }
@@ -87,7 +87,7 @@ func testTraceLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 	assert.Truef(t, strings.Contains(outBuf.String(), traceMsg),
 		"Expected to find %q in %q but didn't", traceMsg, outBuf.String())
 
-	logger.Tracef(traceMsg) // nolint: govet
+	logger.Tracef("%s", traceMsg)
 	assert.Truef(t, strings.Contains(outBuf.String(), traceMsg),
 		"Expected to find %q in %q but didn't", traceMsg, outBuf.String())
 }
@@ -103,7 +103,7 @@ func testInfoLevel(t *testing.T, logger *logging.DefaultLeveledLogger) {
 	assert.Truef(t, strings.Contains(outBuf.String(), infoMsg),
 		"Expected to find %q in %q but didn't", infoMsg, outBuf.String())
 
-	logger.Infof(infoMsg) // nolint: govet
+	logger.Infof("%s", infoMsg)
 	assert.Truef(t, strings.Contains(outBuf.String(), infoMsg),
 		"Expected to find %q in %q but didn't", infoMsg, outBuf.String())
 }
