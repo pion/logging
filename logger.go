@@ -220,8 +220,8 @@ func NewDefaultLoggerFactory() *DefaultLoggerFactory {
 			continue
 		}
 
-		scopes := strings.Split(strings.ToLower(env), ",")
-		for _, scope := range scopes {
+		scopes := strings.SplitSeq(strings.ToLower(env), ",")
+		for scope := range scopes {
 			factory.ScopeLevels[scope] = level
 		}
 	}
