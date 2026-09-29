@@ -192,39 +192,7 @@ func NewDefaultLoggerFactory() *DefaultLoggerFactory {
 	factory.ScopeLevels = make(map[string]LogLevel)
 	factory.Writer = os.Stderr
 
-	logLevels := map[string]LogLevel{
-		"DISABLE": LogLevelDisabled,
-		"ERROR":   LogLevelError,
-		"WARN":    LogLevelWarn,
-		"INFO":    LogLevelInfo,
-		"DEBUG":   LogLevelDebug,
-		"TRACE":   LogLevelTrace,
-	}
-
-	for name, level := range logLevels {
-		env := os.Getenv(fmt.Sprintf("PION_LOG_%s", name))
-
-		if env == "" {
-			env = os.Getenv(fmt.Sprintf("PIONS_LOG_%s", name))
-		}
-
-		if env == "" {
-			continue
-		}
-
-		if strings.ToLower(env) == "all" {
-			if factory.DefaultLogLevel < level {
-				factory.DefaultLogLevel = level
-			}
-
-			continue
-		}
-
-		scopes := strings.SplitSeq(strings.ToLower(env), ",")
-		for scope := range scopes {
-			factory.ScopeLevels[scope] = level
-		}
-	}
+	factory.DefaultLogLevel = applyLogEnv(factory.DefaultLogLevel, factory.ScopeLevels)
 
 	return &factory
 }
@@ -241,4 +209,52 @@ func (f *DefaultLoggerFactory) NewLogger(scope string) LeveledLogger {
 	}
 
 	return NewDefaultLeveledLoggerForScope(scope, logLevel, f.Writer)
+}
+
+// applyLogEnv reads the PION_LOG_<LEVEL> and PIONS_LOG_<LEVEL> variables.
+// Levels are read from least to most verbose, so when a scope is listed for
+// several levels the most verbose one wins regardless of map ordering.
+func applyLogEnv(defaultLevel LogLevel, scopeLevels map[string]LogLevel) LogLevel {
+	logLevels := []struct {
+		name  string
+		level LogLevel
+	}{
+		{"DISABLE", LogLevelDisabled},
+		{"ERROR", LogLevelError},
+		{"WARN", LogLevelWarn},
+		{"INFO", LogLevelInfo},
+		{"DEBUG", LogLevelDebug},
+		{"TRACE", LogLevelTrace},
+	}
+
+	for _, entry := range logLevels {
+		env := os.Getenv(fmt.Sprintf("PION_LOG_%s", entry.name))
+
+		if env == "" {
+			env = os.Getenv(fmt.Sprintf("PIONS_LOG_%s", entry.name))
+		}
+
+		if env == "" {
+			continue
+		}
+
+		if strings.ToLower(strings.TrimSpace(env)) == "all" {
+			if defaultLevel < entry.level {
+				defaultLevel = entry.level
+			}
+
+			continue
+		}
+
+		for scope := range strings.SplitSeq(strings.ToLower(env), ",") {
+			scope = strings.TrimSpace(scope)
+			if scope == "" {
+				continue
+			}
+
+			scopeLevels[scope] = entry.level
+		}
+	}
+
+	return defaultLevel
 }

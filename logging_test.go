@@ -259,3 +259,31 @@ func TestNewDefaultLoggerStderr(t *testing.T) {
 	testWarnLevel(t, logger)
 	testErrorLevel(t, logger)
 }
+
+func TestNewDefaultLoggerFactoryScopesWithSpaces(t *testing.T) {
+	t.Setenv("PION_LOG_DEBUG", "ice, dtls ,, sctp")
+
+	factory := logging.NewDefaultLoggerFactory()
+
+	for _, scope := range []string{"ice", "dtls", "sctp"} {
+		logger, ok := factory.NewLogger(scope).(*logging.DefaultLeveledLogger)
+		assert.True(t, ok, "Invalid logger factory type")
+		testDebugLevel(t, logger)
+	}
+
+	other, ok := factory.NewLogger("other").(*logging.DefaultLeveledLogger)
+	assert.True(t, ok, "Invalid logger factory type")
+	testNoDebugLevel(t, other)
+}
+
+func TestNewDefaultLoggerFactoryScopeInSeveralLevels(t *testing.T) {
+	t.Setenv("PION_LOG_ERROR", "ice")
+	t.Setenv("PION_LOG_WARN", "ice")
+	t.Setenv("PION_LOG_DEBUG", "ice")
+
+	// The result used to depend on map iteration order.
+	for range 50 {
+		factory := logging.NewDefaultLoggerFactory()
+		assert.Equal(t, logging.LogLevelDebug, factory.ScopeLevels["ice"])
+	}
+}

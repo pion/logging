@@ -280,39 +280,7 @@ func newJSONLoggerFactory() *jsonLoggerFactory {
 	factory.scopeLevels = make(map[string]LogLevel)
 	factory.writer = os.Stderr
 
-	logLevels := map[string]LogLevel{
-		"DISABLE": LogLevelDisabled,
-		"ERROR":   LogLevelError,
-		"WARN":    LogLevelWarn,
-		"INFO":    LogLevelInfo,
-		"DEBUG":   LogLevelDebug,
-		"TRACE":   LogLevelTrace,
-	}
-
-	for name, level := range logLevels {
-		env := os.Getenv(fmt.Sprintf("PION_LOG_%s", name))
-
-		if env == "" {
-			env = os.Getenv(fmt.Sprintf("PIONS_LOG_%s", name))
-		}
-
-		if env == "" {
-			continue
-		}
-
-		if strings.ToLower(env) == "all" {
-			if factory.defaultLogLevel < level {
-				factory.defaultLogLevel = level
-			}
-
-			continue
-		}
-
-		scopes := strings.SplitSeq(strings.ToLower(env), ",")
-		for scope := range scopes {
-			factory.scopeLevels[scope] = level
-		}
-	}
+	factory.defaultLogLevel = applyLogEnv(factory.defaultLogLevel, factory.scopeLevels)
 
 	return &factory
 }

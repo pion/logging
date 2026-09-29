@@ -381,3 +381,19 @@ func TestNewJSONLoggerFactory_Fallback(t *testing.T) {
 	factory := unwrapJSONFactory(t, NewJSONLoggerFactory())
 	assert.Equal(t, LogLevelInfo, factory.defaultLogLevel)
 }
+
+func TestNewJSONLoggerFactory_ScopesTrimmedAndDeterministic(t *testing.T) {
+	clearLogEnv(t)
+
+	t.Setenv("PION_LOG_ERROR", "foo")
+	t.Setenv("PION_LOG_WARN", "foo, bar ,")
+	t.Setenv("PION_LOG_DEBUG", "foo")
+
+	for range 50 {
+		factory := unwrapJSONFactory(t, NewJSONLoggerFactory())
+
+		assert.Equal(t, LogLevelDebug, factory.scopeLevels["foo"])
+		assert.Equal(t, LogLevelWarn, factory.scopeLevels["bar"])
+		assert.NotContains(t, factory.scopeLevels, "")
+	}
+}
